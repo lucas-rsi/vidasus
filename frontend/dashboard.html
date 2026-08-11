@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VidaSUS – Painel do Gestor</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <span class="brand">Vida<span>SUS</span> <small style="font-size:.7rem;font-weight:300;color:#AED6F1;">Painel do Gestor</small></span>
+    <nav>
+      <span style="color:#fff;font-weight:500;font-size:.9rem;">Dr. Carlos</span>
+      <button class="btn-sair" onclick="logout()">Sair</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <!-- Tabela de agendamentos -->
+    <div class="card">
+      <div class="card-title">Todos os Agendamentos</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cidadão</th>
+              <th>Data</th>
+              <th>Horário</th>
+              <th>Especialidade</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-todos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="card">
+      <div class="card-title">Agendamentos por Especialidade</div>
+      <div class="chart-wrap">
+        <canvas id="grafico-esp"></canvas>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    exigirLogin('gestor');
+
+    function formatarData(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    // ── KPIs ──
+    const total      = AGENDAMENTOS.length;
+    const confirmados = AGENDAMENTOS.filter(a => a.status === 'Confirmado').length;
+    const cancelados  = AGENDAMENTOS.filter(a => a.status === 'Cancelado').length;
+    const pendentes   = AGENDAMENTOS.filter(a => a.status === 'Pendente').length;
+    const taxaNoShow  = ((cancelados / total) * 100).toFixed(1);
+
+    document.getElementById('kpi-grid').innerHTML = `
+      <div class="kpi-card">
+        <div class="kpi-label">Total</div>
+        <div class="kpi-value">${total}</div>
+      </div>
+      <div class="kpi-card verde">
+        <div class="kpi-label">Confirmados</div>
+        <div class="kpi-value">${confirmados}</div>
+      </div>
+      <div class="kpi-card laranja">
+        <div class="kpi-label">Pendentes</div>
+        <div class="kpi-value">${pendentes}</div>
+      </div>
+      <div class="kpi-card vermelho">
+        <div class="kpi-label">Taxa de No-Show</div>
+        <div class="kpi-value">${taxaNoShow}%</div>
+      </div>
+    `;
+
+    // ── TABELA (ordenada por data) ──
+    const ordenados = [...AGENDAMENTOS].sort((a, b) => a.data.localeCompare(b.data));
+    document.getElementById('tbody-todos').innerHTML = ordenados.map(ag => `
+      <tr>
+        <td>${ag.cidadao}</td>
+        <td>${formatarData(ag.data)}</td>
+        <td>${ag.horario}</td>
+        <td>${ag.especialidade}</td>
+        <td>${statusBadge(ag.status)}</td>
+      </tr>
+    `).join('');
+
+    // ── GRÁFICO ──
+    const contagem = {};
+    AGENDAMENTOS.forEach(ag => {
+      contagem[ag.especialidade] = (contagem[ag.especialidade] || 0) + 1;
+    });
+    const labels = Object.keys(contagem);
+    const valores = Object.values(contagem);
+    const coresBarra = [
+      '#2E86C1', '#1E8449', '#D68910', '#7D3C98', '#C0392B'
+    ];
+
+    new Chart(document.getElementById('grafico-esp'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Agendamentos',
+          data: valores,
+          backgroundColor: coresBarra.slice(0, labels.length),
+          borderRadius: 6,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.parsed.y} agendamento(s)`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { family: 'Poppins' } },
+            grid: { color: '#E8E8E8' }
+          },
+          x: {
+            ticks: { font: { family: 'Poppins', size: 12 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

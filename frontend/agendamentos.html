@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VidaSUS – Meus Agendamentos</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <span class="brand">Vida<span>SUS</span></span>
+    <nav>
+      <span id="nome-usuario" style="color:#fff;font-weight:500;font-size:.9rem;"></span>
+      <button class="btn-sair" onclick="logout()">Sair</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="trocarTab('agendamentos', this)">Meus Agendamentos</button>
+      <button class="tab-btn"        onclick="trocarTab('historico', this)">Meu Histórico</button>
+    </div>
+
+    <!-- ── ABA AGENDAMENTOS ── -->
+    <div id="tab-agendamentos" class="tab-content active">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+          <span class="card-title" style="margin:0;border:none;padding:0;">Agendamentos</span>
+          <button class="btn btn-primary" onclick="toggleFormNovoAg()">+ Novo Agendamento</button>
+        </div>
+
+        <!-- Formulário inline -->
+        <div id="form-novo-ag" class="inline-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data</label>
+              <input type="date" id="ag-data" />
+            </div>
+            <div class="form-group">
+              <label>Horário</label>
+              <input type="time" id="ag-horario" />
+            </div>
+            <div class="form-group">
+              <label>Especialidade</label>
+              <select id="ag-especialidade">
+                <option>Clínico Geral</option>
+                <option>Cardiologia</option>
+                <option>Pediatria</option>
+                <option>Ortopedia</option>
+                <option>Dermatologia</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:.6rem;margin-top:.2rem;">
+            <button class="btn btn-success" onclick="confirmarNovoAg()">Confirmar</button>
+            <button class="btn btn-secondary" onclick="toggleFormNovoAg()">Fechar</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Horário</th>
+                <th>Especialidade</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-agendamentos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ABA HISTÓRICO ── -->
+    <div id="tab-historico" class="tab-content">
+      <div class="card">
+        <div class="card-title">Histórico de Exames</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo de Exame</th>
+                <th>Resultado</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-historico"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    const usuario = exigirLogin('cidadao');
+    if (usuario) {
+      document.getElementById('nome-usuario').textContent = usuario.nome;
+    }
+
+    // cópia local mutável dos agendamentos do cidadão
+    let meusAgs = AGENDAMENTOS
+      .filter(a => usuario && a.cidadao === usuario.nome)
+      .map(a => ({ ...a }));
+
+    function renderAgendamentos() {
+      const tbody = document.getElementById('tbody-agendamentos');
+      if (meusAgs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Nenhum agendamento encontrado.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = meusAgs.map((ag, idx) => `
+        <tr>
+          <td>${formatarData(ag.data)}</td>
+          <td>${ag.horario}</td>
+          <td>${ag.especialidade}</td>
+          <td>${statusBadge(ag.status)}</td>
+          <td>
+            ${ag.status === 'Pendente'
+              ? `<button class="btn btn-danger btn-sm" onclick="cancelarAg(${idx})">Cancelar</button>`
+              : '—'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderHistorico() {
+      const tbody = document.getElementById('tbody-historico');
+      tbody.innerHTML = HISTORICO_EXAMES.map(e => `
+        <tr>
+          <td>${e.tipo}</td>
+          <td>${e.resultado}</td>
+          <td>${formatarData(e.data)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function formatarData(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function cancelarAg(idx) {
+      meusAgs[idx].status = 'Cancelado';
+      renderAgendamentos();
+    }
+
+    function toggleFormNovoAg() {
+      document.getElementById('form-novo-ag').classList.toggle('open');
+    }
+
+    function confirmarNovoAg() {
+      const data   = document.getElementById('ag-data').value;
+      const horario = document.getElementById('ag-horario').value;
+      const esp    = document.getElementById('ag-especialidade').value;
+      if (!data || !horario) { alert('Preencha data e horário.'); return; }
+      const novoAg = {
+        id: Date.now(),
+        cidadao: usuario.nome,
+        data,
+        horario,
+        especialidade: esp,
+        status: 'Pendente',
+      };
+      meusAgs.push(novoAg);
+      renderAgendamentos();
+      toggleFormNovoAg();
+      // limpar campos
+      document.getElementById('ag-data').value = '';
+      document.getElementById('ag-horario').value = '';
+    }
+
+    function trocarTab(nome, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + nome).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    renderAgendamentos();
+    renderHistorico();
+  </script>
+</body>
+</html>
