@@ -5,7 +5,7 @@
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/SEU-USUARIO/HackGov.git
+git clone https://github.com/lucas-rsi/HackGov.git
 ```
 
 ### 2. Acesse a pasta do projeto
