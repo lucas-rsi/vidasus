@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { loginUsuario } from "../api/client";
 import LoadingSpinner from "../components/LoadingSpinner";
+
+const MAX_TENTATIVAS = 3;
+const BLOQUEIO_SEGUNDOS = 30;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,6 +14,18 @@ export default function Login() {
   const [erroSenha, setErroSenha] = useState("");
   const [erroApi, setErroApi] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [tentativas, setTentativas] = useState(0);
+  const [bloqueado, setBloqueado] = useState(false);
+
+  useEffect(() => {
+    if (!bloqueado) return;
+    const timer = setTimeout(() => {
+      setBloqueado(false);
+      setTentativas(0);
+      setErroApi("");
+    }, BLOQUEIO_SEGUNDOS * 1000);
+    return () => clearTimeout(timer);
+  }, [bloqueado]);
 
   function validar() {
     let valido = true;
@@ -43,6 +58,9 @@ export default function Login() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (bloqueado) return;
+
     setErroApi("");
 
     if (!validar()) return;
@@ -50,10 +68,27 @@ export default function Login() {
     setCarregando(true);
     try {
       const usuario = await loginUsuario(cpf, senha);
+      setTentativas(0);
       sessionStorage.setItem("usuario", JSON.stringify(usuario));
       navigate(usuario.tipo === "GESTOR" ? "/dashboard" : "/agendamentos");
     } catch {
-      setErroApi("CPF ou senha incorretos.");
+      const novasTentativas = tentativas + 1;
+      setTentativas(novasTentativas);
+      setSenha("");
+
+      if (novasTentativas >= MAX_TENTATIVAS) {
+        setBloqueado(true);
+        setErroApi(
+          `Acesso bloqueado. Tente novamente em ${BLOQUEIO_SEGUNDOS} segundos.`
+        );
+      } else {
+        const restantes = MAX_TENTATIVAS - novasTentativas;
+        setErroApi(
+          `CPF ou senha incorretos. ${restantes} ${
+            restantes === 1 ? "tentativa restante" : "tentativas restantes"
+          }.`
+        );
+      }
     } finally {
       setCarregando(false);
     }
@@ -79,6 +114,7 @@ export default function Login() {
               maxLength={11}
               value={cpf}
               onChange={(e) => setCpf(e.target.value)}
+              disabled={bloqueado}
             />
             {erroCpf && <div className="erro-campo">{erroCpf}</div>}
           </div>
@@ -91,6 +127,7 @@ export default function Login() {
               placeholder="Digite sua senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
+              disabled={bloqueado}
             />
             {erroSenha && <div className="erro-campo">{erroSenha}</div>}
           </div>
@@ -98,7 +135,11 @@ export default function Login() {
           {carregando ? (
             <LoadingSpinner />
           ) : (
-            <button type="submit" className="btn btn-primary btn-full">
+            <button
+              type="submit"
+              className="btn btn-primary btn-full"
+              disabled={bloqueado}
+            >
               Entrar
             </button>
           )}
