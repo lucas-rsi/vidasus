@@ -1,34 +1,29 @@
-# HackGov
+VidaSUS
 
-## Instruções para execução
+Plataforma digital de atendimento e agendamento em saúde pública.
 
-### 1. Clone o repositório
+Tecnologias
 
-```bash
-git clone https://github.com/lucas-rsi/vidasus.git
-```
+React
+Python
+Django
+Django REST Framework
+Google Gemini API
 
-### 2. Acesse a pasta do projeto
+Como executar
 
-```bash
-cd HackGov
-```
+Backend
 
-### 3. Instale as dependências
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py runserver
 
-```bash
+Frontend
+
+Em outro terminal:
+
+cd react
 npm install
-```
-
-### 4. Execute o projeto
-
-```bash
 npm run dev
-```
-
-Após executar o comando, o terminal exibirá o endereço local da aplicação. Acesse esse endereço pelo navegador.
-
-### Requisitos
-
-* Node.js
-* npm
