@@ -1,2 +1,3 @@
 node_modules/
 vidasus.db
+.env

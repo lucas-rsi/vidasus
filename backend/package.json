@@ -9,8 +9,10 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
+    "@google/genai": "^2.22.0",
     "better-sqlite3": "^11.7.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.21.2"
   }
 }
