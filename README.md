@@ -1,3 +1,13 @@
+## Nota importante
+
+O backend deste projeto passou por uma migração de tecnologia.
+
+* **Versão anterior:** Python + Django
+* **Versão atual:** Node.js + Express
+
+A implementação atual do backend utiliza **Node.js com Express**. A versão anterior, desenvolvida em **Python com Django**, foi substituída durante a evolução do projeto.
+
+
 # VidaSUS
 
 Plataforma digital desenvolvida para facilitar o acesso dos cidadãos a serviços públicos de saúde.
