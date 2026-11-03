@@ -135,6 +135,8 @@ Responda sempre em português do Brasil.
   }
 });
 
+app.use("/api/analytics", require("./analytics/router"));
+
 // ==========================================
 // INICIALIZAÇÃO DO SERVIDOR
 // ==========================================
