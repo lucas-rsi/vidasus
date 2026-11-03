@@ -1,0 +1,6 @@
+id,cpf_cidadao,data,horario,especialidade,status,hora,dia_semana,cancelado
+1,12345678900,2025-05-20,09:00,Cardiologia,Confirmado,9,1,0
+2,12345678900,2025-05-22,14:00,Clínico Geral,Pendente,14,3,0
+3,98765432100,2025-05-21,10:30,Pediatria,Cancelado,10,2,1
+4,98765432100,2025-05-23,08:00,Ortopedia,Confirmado,8,4,0
+5,12345678900,2025-05-25,11:00,Dermatologia,Pendente,11,6,0
